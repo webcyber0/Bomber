@@ -93,23 +93,23 @@ async function startAttack() {
     statsInterval = setInterval(fetchStats, 1000);
 }
 
-// ─── FETCH STATS ───
+// ─── FETCH STATS (UPDATED - Error Handle Better) ───
 async function fetchStats() {
     try {
         const res = await fetch('/api/stats');
+        if (!res.ok) return;
         const stats = await res.json();
 
-        document.getElementById('stat-sms').textContent = stats.sms_sent;
-        document.getElementById('stat-call').textContent = stats.calls_sent;
-        document.getElementById('stat-whatsapp').textContent = stats.whatsapp_sent;
-        document.getElementById('stat-total').textContent = stats.total;
-        document.getElementById('stat-failed').textContent = stats.failed;
+        document.getElementById('stat-sms').textContent = stats.sms_sent || 0;
+        document.getElementById('stat-call').textContent = stats.calls_sent || 0;
+        document.getElementById('stat-whatsapp').textContent = stats.whatsapp_sent || 0;
+        document.getElementById('stat-total').textContent = stats.total || 0;
+        document.getElementById('stat-failed').textContent = stats.failed || 0;
 
-        const total = stats.total + stats.failed;
-        const pct = total > 0 ? (stats.total / total) * 100 : 0;
+        const total = (stats.total || 0) + (stats.failed || 0);
+        const pct = total > 0 ? ((stats.total || 0) / total) * 100 : 0;
         document.getElementById('progress-fill').style.width = Math.min(pct, 100) + '%';
 
-        // Check if server stopped (if count reached)
         const statusRes = await fetch('/api/status');
         const status = await statusRes.json();
         if (!status.running && isRunning) {
