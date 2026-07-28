@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ CYBER BOMBER v3.0 ⚡</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <div class="top-left">
+            <span class="glitch" data-text="⚡ CYBER BOMBER v3.0">⚡ CYBER BOMBER v3.0</span>
+        </div>
+        <div class="top-right">
+            <a href="/settings" class="btn-setting">⚙ SETTINGS</a>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+        <!-- TERMINAL HEADER -->
+        <div class="terminal-header">
+            <div class="terminal-dots">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+            </div>
+            <div class="terminal-title">root@cyber-bomber:~# ./attack.sh</div>
+        </div>
+
+        <!-- BODY -->
+        <div class="terminal-body">
+            <!-- BANNER -->
+            <div class="banner">
+                <pre class="ascii-art">
+██████╗ ███████╗██╗   ██╗██████╗ ███████╗██████╗ 
+██╔══██╗██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗
+██████╔╝█████╗   ╚████╔╝ ██████╔╝█████╗  ██████╔╝
+██╔══██╗██╔══╝    ╚██╔╝  ██╔══██╗██╔══╝  ██╔══██╗
+██████╔╝███████╗   ██║   ██████╔╝███████╗██║  ██║
+╚═════╝ ╚══════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝
+                </pre>
+                <div class="sub-banner">
+                    <span class="blink-red">[!] FOR AUTHORIZED SECURITY TESTING ONLY [!]</span>
+                </div>
+            </div>
+
+            <!-- STATUS BAR -->
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-label">STATUS:</span>
+                    <span id="status-text" class="status-value idle">⛔ IDLE</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">TARGET:</span>
+                    <span id="target-display" class="status-value">---</span>
+                </div>
+            </div>
+
+            <!-- INPUT SECTION -->
+            <div class="input-section">
+                <div class="input-group">
+                    <label class="input-label">
+                        <span class="prompt">root@cyber:~$</span> ENTER TARGET NUMBER:
+                    </label>
+                    <div class="phone-input-wrapper">
+                        <span class="country-code">+91</span>
+                        <input type="text" id="phone" class="hacker-input" placeholder="9876543210" maxlength="10" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- ATTACK TYPE SELECTION -->
+                <div class="input-group">
+                    <label class="input-label">
+                        <span class="prompt">root@cyber:~$</span> SELECT ATTACK TYPE:
+                    </label>
+                    <div class="checkbox-group">
+                        <label class="hacker-checkbox">
+                            <input type="checkbox" id="chk-sms" checked>
+                            <span class="checkmark"></span>
+                            <span class="check-label sms-color">📨 SMS BOMB</span>
+                        </label>
+                        <label class="hacker-checkbox">
+                            <input type="checkbox" id="chk-call">
+                            <span class="checkmark"></span>
+                            <span class="check-label call-color">📞 CALL BOMB</span>
+                        </label>
+                        <label class="hacker-checkbox">
+                            <input type="checkbox" id="chk-whatsapp">
+                            <span class="checkmark"></span>
+                            <span class="check-label wa-color">💬 WHATSAPP</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- COUNT SELECTION -->
+                <div class="input-group">
+                    <label class="input-label">
+                        <span class="prompt">root@cyber:~$</span> SELECT ATTACK COUNT:
+                    </label>
+                    <div class="count-selector">
+                        <button class="count-btn" data-value="1">1</button>
+                        <button class="count-btn" data-value="2">2</button>
+                        <button class="count-btn" data-value="10">10</button>
+                        <button class="count-btn" data-value="50">50</button>
+                        <button class="count-btn" data-value="100">100</button>
+                        <button class="count-btn" data-value="1000">1K</button>
+                        <button class="count-btn" data-value="10000">10K</button>
+                        <button class="count-btn active" data-value="-1">∞ UNLIMITED</button>
+                    </div>
+                </div>
+
+                <!-- ACTION BUTTONS -->
+                <div class="action-buttons">
+                    <button id="btn-start" class="btn btn-start" onclick="startAttack()">
+                        <span class="btn-icon">⚡</span> INITIATE ATTACK
+                    </button>
+                    <button id="btn-stop" class="btn btn-stop" onclick="stopAttack()" style="display:none;">
+                        <span class="btn-icon">⛔</span> ABORT MISSION
+                    </button>
+                </div>
+            </div>
+
+            <!-- STATS DISPLAY -->
+            <div class="stats-section" id="stats-section" style="display:none;">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📨</div>
+                        <div class="stat-detail">
+                            <span class="stat-value" id="stat-sms">0</span>
+                            <span class="stat-label">SMS SENT</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📞</div>
+                        <div class="stat-detail">
+                            <span class="stat-value" id="stat-call">0</span>
+                            <span class="stat-label">CALLS MADE</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💬</div>
+                        <div class="stat-detail">
+                            <span class="stat-value" id="stat-whatsapp">0</span>
+                            <span class="stat-label">WHATSAPP</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-detail">
+                            <span class="stat-value" id="stat-total">0</span>
+                            <span class="stat-label">TOTAL HITS</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-detail">
+                            <span class="stat-value" id="stat-failed">0</span>
+                            <span class="stat-label">FAILED</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- LOG OUTPUT -->
+            <div class="log-section">
+                <div class="log-header">
+                    <span class="log-title">📋 CONSOLE LOG</span>
+                    <button class="btn-clear" onclick="clearLog()">CLEAR</button>
+                </div>
+                <div class="log-output" id="log-output">
+                    <div class="log-line system">[SYSTEM] Cyber Bomber v3.0 initialized successfully.</div>
+                    <div class="log-line system">[SYSTEM] Loaded 400+ attack vectors.</div>
+                    <div class="log-line system">[SYSTEM] Waiting for target input...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <a href="https://instagram.com/webcyber0" target="_blank" class="ig-btn">
+                <span class="ig-icon">📷</span> @webcyber0
+            </a>
+            <span class="footer-text">⚠️ AUTHORIZED TESTING ONLY ⚠️</span>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
