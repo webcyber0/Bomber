@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙ DASHBOARD - NO-BOM LIST</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="top-bar">
+        <div class="top-left">
+            <span class="glitch" data-text="⚙ ADMIN DASHBOARD">⚙ ADMIN DASHBOARD</span>
+        </div>
+        <div class="top-right">
+            <a href="/" class="btn-setting">⬅ BOMBER</a>
+            <a href="/logout" class="btn-setting" style="background:#a00;">🚪 LOGOUT</a>
+        </div>
+    </div>
+    <div class="container" style="max-width:700px;">
+        <div class="terminal-header">
+            <div class="terminal-dots">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+            </div>
+            <div class="terminal-title">root@cyber-bomber:~# ./nobom-manager</div>
+        </div>
+        <div class="terminal-body">
+            <h2 class="section-title">🛡️ NO-BOM NUMBER LIST</h2>
+            <p class="info-text">Numbers added here will be <span style="color:#f44;">BLOCKED</span> from all attacks.</p>
+
+            <div class="input-group">
+                <label class="input-label">
+                    <span class="prompt">root@cyber:~$</span> ADD NUMBER TO BLOCK:
+                </label>
+                <div style="display:flex;gap:10px;">
+                    <div class="phone-input-wrapper" style="flex:1;">
+                        <span class="country-code">+91</span>
+                        <input type="text" id="new-block-number" class="hacker-input" placeholder="9876543210" maxlength="10" autocomplete="off">
+                    </div>
+                    <button class="btn btn-start" onclick="addBlockNumber()" style="padding:8px 20px;">➕ ADD</button>
+                </div>
+            </div>
+
+            <div class="numbers-list">
+                <h3>📋 Blocked Numbers ({{ numbers|length }})</h3>
+                {% if numbers %}
+                <table class="hacker-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>📱 NUMBER</th>
+                            <th>⚙ ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for num in numbers %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>+91 {{ num }}</td>
+                            <td><button class="btn btn-stop" onclick="removeNumber('{{ num }}')" style="padding:3px 12px;font-size:12px;">🗑 REMOVE</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">⚠️ No numbers in block list yet.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script>
+        async function addBlockNumber() {
+            const phone = document.getElementById('new-block-number').value.trim();
+            if (!phone || phone.length !== 10 || !/^\d+$/.test(phone)) {
+                alert('❌ Enter a valid 10-digit number!');
+                return;
+            }
+            const res = await fetch('/api/nobom/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone: phone})
+            });
+            const data = await res.json();
+            if (data.success) location.reload();
+            else alert('❌ ' + data.error);
+        }
+
+        async function removeNumber(phone) {
+            if (!confirm(`Remove +91 ${phone} from block list?`)) return;
+            const res = await fetch('/api/nobom/remove', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone: phone})
+            });
+            const data = await res.json();
+            if (data.success) location.reload();
+            else alert('❌ ' + data.error);
+        }
+    </script>
+</body>
+</html>
