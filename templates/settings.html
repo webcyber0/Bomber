@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙ SETTINGS - CYBER BOMBER</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="container" style="max-width:500px;">
+        <div class="terminal-header">
+            <div class="terminal-dots">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+            </div>
+            <div class="terminal-title">root@cyber-bomber:~# secure-settings</div>
+        </div>
+        <div class="terminal-body" style="text-align:center;">
+            <pre class="ascii-art" style="font-size:10px;">
+███████╗███████╗████████╗████████╗██╗███╗   ██╗ ██████╗ ███████╗
+██╔════╝██╔════╝╚══██╔══╝╚══██╔══╝██║████╗  ██║██╔════╝ ██╔════╝
+███████╗█████╗     ██║      ██║   ██║██╔██╗ ██║██║  ███╗███████╗
+╚════██║██╔══╝     ██║      ██║   ██║██║╚██╗██║██║   ██║╚════██║
+███████║███████╗   ██║      ██║   ██║██║ ╚████║╚██████╔╝███████║
+╚══════╝╚══════╝   ╚═╝      ╚═╝   ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝
+            </pre>
+            <h2 class="section-title">🔒 ADMIN AUTHENTICATION</h2>
+            {% if error %}
+            <div class="error-msg">{{ error }}</div>
+            {% endif %}
+            <form method="POST" style="margin-top:20px;">
+                <div class="input-group">
+                    <label class="input-label">
+                        <span class="prompt">root@cyber:~$</span> ENTER MASTER PASSWORD:
+                    </label>
+                    <input type="password" name="password" class="hacker-input" placeholder="********" required autocomplete="off">
+                </div>
+                <br>
+                <button type="submit" class="btn btn-start" style="width:100%;">
+                    <span class="btn-icon">🔓</span> UNLOCK SETTINGS
+                </button>
+            </form>
+            <br>
+            <a href="/" class="btn btn-stop" style="display:inline-block;padding:10px 30px;text-decoration:none;">
+                ⬅ BACK TO BOMBER
+            </a>
+        </div>
+    </div>
+</body>
+</html>
