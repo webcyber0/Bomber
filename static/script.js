@@ -11,7 +11,7 @@ document.querySelectorAll('.count-btn').forEach(btn => {
     });
 });
 
-// ─── PHONE INPUT - only digits ───
+// ─── PHONE INPUT ───
 document.getElementById('phone').addEventListener('input', function() {
     this.value = this.value.replace(/\D/g, '').slice(0, 10);
 });
@@ -38,7 +38,7 @@ function clearLog() {
 }
 
 // ─── START ATTACK ───
-async function startAttack() {
+async function startAttack(turbo = false) {
     const phone = document.getElementById('phone').value.trim();
     if (!phone || phone.length !== 10) {
         addLog('❌ ERROR: Please enter a valid 10-digit number!', 'error');
@@ -59,23 +59,26 @@ async function startAttack() {
 
     // Disable inputs
     document.getElementById('phone').disabled = true;
+    document.querySelectorAll('.count-btn').forEach(b => b.style.pointerEvents = 'none');
     document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-turbo').style.display = 'none';
     document.getElementById('btn-stop').style.display = 'flex';
 
     document.getElementById('target-display').textContent = `+91 ${phone}`;
     document.getElementById('target-display').className = 'status-value attacking';
-    document.getElementById('status-text').textContent = '⚡ ATTACKING...';
+    document.getElementById('status-text').textContent = turbo ? '⚡ TURBO MODE ACTIVE!' : '⚡ ATTACKING...';
     document.getElementById('status-text').className = 'status-value attacking';
     document.getElementById('stats-section').style.display = 'block';
 
     const countLabel = count === -1 ? '♾ UNLIMITED' : count;
-    addLog(`🚀 INITIATING ATTACK on +91 ${phone} | Type: ${types.join(', ')} | Count: ${countLabel}`, 'system');
+    const modeLabel = turbo ? '🚀 TURBO' : 'NORMAL';
+    addLog(`🚀 [${modeLabel}] INITIATING on +91 ${phone} | Type: ${types.join(', ')} | Count: ${countLabel}`, 'system');
     addLog(`🎯 Sending attack request to server...`, 'info');
 
     const res = await fetch('/api/start', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({phone, types, count})
+        body: JSON.stringify({phone, types, count, turbo})
     });
     const data = await res.json();
 
@@ -88,12 +91,11 @@ async function startAttack() {
     addLog(`✅ ${data.message}`, 'success');
     isRunning = true;
 
-    // Start stats polling
     if (statsInterval) clearInterval(statsInterval);
-    statsInterval = setInterval(fetchStats, 1000);
+    statsInterval = setInterval(fetchStats, 800); // Faster polling
 }
 
-// ─── FETCH STATS (UPDATED - Error Handle Better) ───
+// ─── FETCH STATS ───
 async function fetchStats() {
     try {
         const res = await fetch('/api/stats');
@@ -113,7 +115,7 @@ async function fetchStats() {
         const statusRes = await fetch('/api/status');
         const status = await statusRes.json();
         if (!status.running && isRunning) {
-            addLog(`✅ ATTACK COMPLETE! Total hits: ${stats.total}`, 'success');
+            addLog(`✅ ATTACK COMPLETE! Total hits: ${stats.total} | Failed: ${stats.failed}`, 'success');
             stopAttackUI();
         }
     } catch (e) {
@@ -136,7 +138,9 @@ function stopAttackUI() {
     }
 
     document.getElementById('phone').disabled = false;
+    document.querySelectorAll('.count-btn').forEach(b => b.style.pointerEvents = 'auto');
     document.getElementById('btn-start').style.display = 'flex';
+    document.getElementById('btn-turbo').style.display = 'flex';
     document.getElementById('btn-stop').style.display = 'none';
 
     document.getElementById('status-text').textContent = '✅ COMPLETE';
@@ -155,11 +159,12 @@ window.addEventListener('load', async () => {
             document.getElementById('status-text').textContent = '⚡ ATTACKING...';
             document.getElementById('status-text').className = 'status-value attacking';
             document.getElementById('btn-start').style.display = 'none';
+            document.getElementById('btn-turbo').style.display = 'none';
             document.getElementById('btn-stop').style.display = 'flex';
             document.getElementById('stats-section').style.display = 'block';
             document.getElementById('phone').disabled = true;
             isRunning = true;
-            statsInterval = setInterval(fetchStats, 1000);
+            statsInterval = setInterval(fetchStats, 800);
             addLog('🔄 Reconnected to active attack session.', 'system');
         }
     } catch(e) {}
