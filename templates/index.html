@@ -114,14 +114,19 @@
                 </div>
 
                 <!-- ACTION BUTTONS -->
-                <div class="action-buttons">
-                    <button id="btn-start" class="btn btn-start" onclick="startAttack()">
-                        <span class="btn-icon">⚡</span> INITIATE ATTACK
-                    </button>
-                    <button id="btn-stop" class="btn btn-stop" onclick="stopAttack()" style="display:none;">
-                        <span class="btn-icon">⛔</span> ABORT MISSION
-                    </button>
-                </div>
+                <!-- ACTION BUTTONS -->
+<div class="action-buttons" style="display:flex;flex-wrap:wrap;gap:10px;">
+    <button id="btn-start" class="btn btn-start" onclick="startAttack(false)" style="flex:1;">
+        <span class="btn-icon">⚡</span> NORMAL ATTACK
+    </button>
+    <button id="btn-turbo" class="btn" onclick="startAttack(true)" 
+            style="flex:1;background:#ff0;color:#000;border:none;font-weight:bold;">
+        <span class="btn-icon">🚀</span> TURBO MODE
+    </button>
+    <button id="btn-stop" class="btn btn-stop" onclick="stopAttack()" style="display:none;flex:1;">
+        <span class="btn-icon">⛔</span> ABORT MISSION
+    </button>
+</div>
             </div>
 
             <!-- STATS DISPLAY -->
